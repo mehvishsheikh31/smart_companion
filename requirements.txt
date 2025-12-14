@@ -1,0 +1,8 @@
+Flask
+authlib
+requests
+python-dotenv
+groq
+pypdf
+pdfplumber
+gunicorn

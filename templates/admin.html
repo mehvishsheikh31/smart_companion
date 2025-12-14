@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="module-wrapper">
+    <div class="container py-5">
+        
+        <div class="d-flex justify-content-between align-items-center mb-5 animate-fade-down">
+            <div>
+                <a href="/" class="btn btn-sm btn-light-glass text-white mb-2"><i class="fas fa-arrow-left me-2"></i> Dashboard</a>
+                <h2 class="fw-bold text-white mb-0 text-shadow">Admin Control Room</h2>
+            </div>
+            <div class="badge bg-danger px-3 py-2 rounded-pill shadow-lg animate-pulse">
+                <i class="fas fa-circle me-2 small"></i>Live Database
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5 animate-fade-up">
+            <div class="col-md-6">
+                <div class="glass-card p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-bold text-uppercase mb-1 small">Total Users</p>
+                        <h1 class="fw-bold text-dark display-4 mb-0">{{ total_users }}</h1>
+                    </div>
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary rounded-circle p-4">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="glass-card p-4 d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="text-muted fw-bold text-uppercase mb-1 small">Total AI Scans</p>
+                        <h1 class="fw-bold text-dark display-4 mb-0">{{ total_scans }}</h1>
+                    </div>
+                    <div class="icon-box bg-purple bg-opacity-10 text-purple rounded-circle p-4">
+                        <i class="fas fa-robot fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card overflow-hidden shadow-2xl animate-fade-up" style="animation-delay: 0.2s;">
+            <div class="p-4 border-bottom bg-light">
+                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-list me-2"></i>Registered Users Log</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary text-uppercase small">
+                        <tr>
+                            <th class="ps-4">User Profile</th>
+                            <th>Email Address</th>
+                            <th>Last Seen</th>
+                            <th class="text-center">Visits</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                        {% for u in users %}
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ u.picture }}" class="rounded-circle me-3 border" width="40" height="40" onerror="this.src='https://ui-avatars.com/api/?name={{u.name}}'">
+                                    <span class="fw-bold text-dark">{{ u.name }}</span>
+                                </div>
+                            </td>
+                            <td class="text-muted">{{ u.email }}</td>
+                            <td>
+                                {% if u.last_login %}
+                                    <span class="badge bg-info bg-opacity-10 text-dark border border-info rounded-pill px-3">{{ u.last_login }}</span>
+                                {% else %}
+                                    <span class="text-muted small">Just Joined</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-secondary rounded-pill px-3">{{ u.login_count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .module-wrapper {
+        min-height: 100vh;
+        padding-top: 80px;
+        background: radial-gradient(circle at 10% 20%, rgb(30, 10, 50) 0%, rgb(10, 5, 20) 90%);
+        background-attachment: fixed;
+    }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.3); }
+    .icon-box { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; }
+    .text-purple { color: #6f42c1; }
+    .bg-purple { background-color: #6f42c1; }
+    .shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+    
+    /* Animation */
+    .animate-pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    .animate-fade-up { animation: fadeUp 0.8s ease-out backwards; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+{% endblock %}
