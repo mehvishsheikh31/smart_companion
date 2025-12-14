@@ -8,10 +8,12 @@ from authlib.integrations.flask_client import OAuth
 from dotenv import load_dotenv
 from groq import Groq
 from pypdf import PdfReader
-
+from werkzeug.middleware.proxy_fix import ProxyFix
 load_dotenv()
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+# -----------------------------------------------------------
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "super_secret_dev_key")
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 
