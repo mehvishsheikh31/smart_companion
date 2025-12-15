@@ -6,3 +6,4 @@ groq
 pypdf
 pdfplumber
 gunicorn
+psycopg2-binary

@@ -1,4 +1,6 @@
 import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import sqlite3
 import datetime
 import requests # <--- THIS WAS MISSING
@@ -40,36 +42,76 @@ def extract_text_from_pdf(file):
             return text
     except Exception as e:
         return ""
-# Database Setup
-def init_db():
-    conn = sqlite3.connect('database.db')
-    c = conn.cursor()
     
-    # 1. Create Users Table with ALL columns (New & Old)
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            email TEXT PRIMARY KEY, 
-            name TEXT, 
-            picture TEXT,
-            last_login TEXT,
-            login_count INTEGER DEFAULT 0
-        )
-    ''')
+    
+def get_db_connection():
+    # Check if we are on Render (DATABASE_URL exists)
+    db_url = os.environ.get('DATABASE_URL')
 
-    # 2. Create Reports Table
-    c.execute('''CREATE TABLE IF NOT EXISTS reports (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, role TEXT, content TEXT, created_at TEXT)''')
+    if db_url:
+        # Connect to Render's PostgreSQL
+        conn = psycopg2.connect(db_url)
+        return conn
+    else:
+        # Connect to Local SQLite (Your Laptop)
+        conn = sqlite3.connect('database.db')
+        conn.row_factory = sqlite3.Row
+        return conn
     
-    # 3. Create Jobs Table
-    c.execute('''CREATE TABLE IF NOT EXISTS saved_jobs (id INTEGER PRIMARY KEY AUTOINCREMENT, user_email TEXT, title TEXT, company TEXT, location TEXT, url TEXT, created_at TEXT)''')
-    
-    # 4. Create Cache Table
-    c.execute('''CREATE TABLE IF NOT EXISTS job_cache (search_key TEXT PRIMARY KEY, json_data TEXT, updated_at TEXT)''')
-    
+def init_db():
+    conn = get_db_connection()
+    c = conn.cursor()
+
+    # Check if using Postgres (Render)
+    if os.environ.get('DATABASE_URL'):
+        # Create Users Table (Postgres Syntax)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT,
+                picture TEXT,
+                role TEXT,
+                last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                login_count INTEGER DEFAULT 1
+            )
+        ''')
+        # Create Reports Table (Postgres Syntax)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS reports (
+                id SERIAL PRIMARY KEY,
+                user_email TEXT,
+                filename TEXT,
+                content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+    else:
+        # Create Users Table (SQLite Syntax)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                name TEXT,
+                picture TEXT,
+                role TEXT,
+                last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                login_count INTEGER DEFAULT 1
+            )
+        ''')
+        # Create Reports Table (SQLite Syntax)
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_email TEXT,
+                filename TEXT,
+                content TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
     conn.commit()
     conn.close()
-
-# Run it immediately
-init_db()
 
 def extract_text_from_pdf(pdf_file):
     try:
@@ -109,23 +151,67 @@ def login():
 
 @app.route('/google/callback')
 def authorize():
+    # 1. Get User Info from Google
     token = google.authorize_access_token()
-    user_info = google.userinfo()
+    user_info = google.get('https://www.googleapis.com/oauth2/v1/userinfo').json()
     session['user'] = user_info
     
-    # --- TRACK USER LOGIN ---
-    conn = sqlite3.connect('database.db')
+    # Extract details
+    email = user_info['email']
+    name = user_info.get('name', 'User')
+    picture = user_info.get('picture', '')
+
+    # 2. Connect to the Database (Auto-detects Postgres or SQLite)
+    conn = get_db_connection()
     c = conn.cursor()
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # 1. Try to Insert New User
-    c.execute("INSERT OR IGNORE INTO users (email, name, picture, login_count) VALUES (?, ?, ?, 0)", 
-              (user_info['email'], user_info['name'], user_info['picture']))
+    # 3. Check if we are on Render (Postgres) or Local (SQLite)
+    is_postgres = os.environ.get('DATABASE_URL') is not None
+
+    # --- START SMART DATABASE LOGIC ---
     
-    # 2. Update Login Stats (Increment count, set time)
-    c.execute("UPDATE users SET last_login = ?, login_count = login_count + 1 WHERE email = ?", 
-              (now, user_info['email']))
-              
+    # A. Check if user exists
+    if is_postgres:
+        c.execute("SELECT * FROM users WHERE email = %s", (email,))
+    else:
+        c.execute("SELECT * FROM users WHERE email = ?", (email,))
+        
+    existing_user = c.fetchone()
+
+    # B. If User is NEW -> INSERT
+    if not existing_user:
+        if is_postgres:
+            c.execute("""
+                INSERT INTO users (email, name, picture, role, login_count, last_login) 
+                VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP)
+            """, (email, name, picture, 'Student', 1))
+        else:
+            c.execute("""
+                INSERT INTO users (email, name, picture, role, login_count, last_login) 
+                VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+            """, (email, name, picture, 'Student', 1))
+            
+    # C. If User EXISTS -> UPDATE (Increment login count)
+    else:
+        # Calculate new count (handle different dictionary types)
+        current_count = existing_user['login_count'] if existing_user else 0
+        new_count = current_count + 1
+        
+        if is_postgres:
+            c.execute("""
+                UPDATE users 
+                SET last_login = CURRENT_TIMESTAMP, login_count = %s, picture = %s 
+                WHERE email = %s
+            """, (new_count, picture, email))
+        else:
+            c.execute("""
+                UPDATE users 
+                SET last_login = CURRENT_TIMESTAMP, login_count = ?, picture = ? 
+                WHERE email = ?
+            """, (new_count, picture, email))
+
+    # --- END SMART DATABASE LOGIC ---
+
     conn.commit()
     conn.close()
     
