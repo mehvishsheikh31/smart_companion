@@ -366,5 +366,22 @@ def fix_db_manual():
     init_db()
     return "Database Tables Created Manually!"
 
+# --- RESET REPORTS TABLE ---
+@app.route('/reset-reports')
+def reset_reports():
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # 1. Delete the old table (Nuclear option)
+    c.execute("DROP TABLE IF EXISTS reports")
+    
+    # 2. Save the deletion
+    conn.commit()
+    conn.close()
+    
+    # 3. Re-run init_db to create the NEW table with 'role' column
+    init_db()
+    
+    return "<h1>Success! Old Reports table deleted. New table created with 'role' column.</h1>"
 if __name__ == '__main__':
     app.run(debug=True)
