@@ -59,6 +59,14 @@ Smart Companion addresses the **entire job-seeking lifecycle** in one platform.
 
 ---
 
+| Technology              | Usage                                                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **PostgreSQL (Render)** | Production database storing user profiles, authentication data, login history, and analytics information in the cloud |
+| **SQLite (Local)**      | Lightweight development database used for local testing and rapid setup without external dependencies                 |
+| **Psycopg2**            | Python adapter for establishing secure connections between Flask backend and PostgreSQL database                      |
+| **Server-Side Storage** | Temporary storage for uploaded resume PDFs during processing and text extraction                                      |
+
+
 ### 🔐 Authentication & Security
 | Feature | Implementation |
 |-------|---------------|
@@ -105,15 +113,8 @@ Smart Companion addresses the **entire job-seeking lifecycle** in one platform.
 | **Job Search APIs / Web Requests** | Fetch live job openings |
 | **Course Platforms** | Course recommendations |
 
----
-Technology,Usage
-PostgreSQL (Render),"Production Database. Stores user profiles, permanent login history, and analytics data in the cloud."
-SQLite (Local),Development Database. Automatically used for local testing to ensure easy setup without API keys.
-Psycopg2,Python adapter used to handle secure connections to the remote PostgreSQL server.
-Server-Side Storage,Temporary storage for processing uploaded Resume PDFs before parsing.
+-
 
-
----
 
 ## 🧪 Development Tools
 - VS Code / PyCharm
