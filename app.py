@@ -16,6 +16,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 load_dotenv()
 
 app = Flask(__name__)
+# Fix for Render's Proxy headers (prevents HTTP/HTTPS mismatch errors)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 # -----------------------------------------------------------
@@ -32,7 +33,8 @@ google = oauth.register(
     client_kwargs={'scope': 'openid email profile'}
 )
 
-client = Groq(api_key=os.getenv("GROK_API_KEY"))
+# AI Client
+client = Groq(api_key=os.getenv("GROK_API_KEY")) # Ensure this matches your .env
 
 # --- HELPER FUNCTIONS ---
 
@@ -105,7 +107,6 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("Database Initialized Successfully.")
 
 def extract_text_from_pdf(file):
     try:
@@ -136,19 +137,24 @@ def home():
             c.execute("SELECT * FROM reports WHERE user_email = %s ORDER BY id DESC LIMIT 3", (email,))
             saved_reports = c.fetchall()
             
-            c.execute("SELECT * FROM saved_jobs WHERE user_email = %s ORDER BY id DESC LIMIT 5", (email,))
-            saved_jobs_list = c.fetchall()
+            # Use Try/Except to handle case if table was missing momentarily
+            try:
+                c.execute("SELECT * FROM saved_jobs WHERE user_email = %s ORDER BY id DESC LIMIT 5", (email,))
+                saved_jobs_list = c.fetchall()
+            except:
+                saved_jobs_list = []
         else:
             # SQLite Syntax (?)
             c.execute("SELECT * FROM reports WHERE user_email = ? ORDER BY id DESC LIMIT 3", (email,))
             saved_reports = c.fetchall()
             
-            c.execute("SELECT * FROM saved_jobs WHERE user_email = ? ORDER BY id DESC LIMIT 5", (email,))
-            saved_jobs_list = c.fetchall()
+            try:
+                c.execute("SELECT * FROM saved_jobs WHERE user_email = ? ORDER BY id DESC LIMIT 5", (email,))
+                saved_jobs_list = c.fetchall()
+            except:
+                saved_jobs_list = []
         
         conn.close()
-        
-        # Convert RealDictRow to list if needed (Postgres returns RealDictRow which is fine for Jinja)
         return render_template('dashboard.html', user=session['user'], reports=saved_reports, saved_jobs=saved_jobs_list)
         
     return render_template('login.html')
@@ -209,7 +215,7 @@ def logout():
     session.pop('user', None)
     return redirect('/')
 
-# --- MODULES (Keep these simple) ---
+# --- MODULE 1: RESUME (High Quality Prompt Restored) ---
 
 @app.route('/resume')
 def resume_module():
@@ -225,7 +231,95 @@ def analyze_resume():
     text = extract_text_from_pdf(file)
     if len(text) < 50: return "Resume is too short or unreadable.", 400
 
-    prompt = f"Analyze resume for {target_role}. Content: {text[:3000]}. Give HTML output."
+    # THE HIGH QUALITY PROMPT
+    prompt = f"""
+    Role: Expert Resume Strategist.
+    Task: Audit this resume for the role of "{target_role}".
+    Resume Content: "{text[:3000]}"
+    
+    OUTPUT HTML ONLY. NO MARKDOWN.
+    
+    REQUIREMENTS:
+    1. Summaries: Write 3 versions (Short/Medium/Long).
+    2. Skills: Identify what the candidate HAS (Green) vs what is MISSING (Red) for "{target_role}".
+    3. Bullets: Pick 3 weak bullet points and rewrite them to be result-oriented.
+    
+    USE THIS EXACT HTML STRUCTURE:
+
+    <div class="analysis-container">
+        <div class="mb-5 animate-fade-up">
+            <h4 class="fw-bold text-dark mb-4"><i class="fas fa-pen-nib text-primary me-2"></i>Profile Summary Options</h4>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="p-4 border rounded-4 h-100 bg-white shadow-sm border-top-blue">
+                        <h5 class="fw-bold text-primary mb-2">Short Version</h5>
+                        <p class="text-dark small mb-0" style="line-height: 1.6;">{{Write Short Summary}}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-4 border rounded-4 h-100 bg-white shadow-sm border-top-purple">
+                        <h5 class="fw-bold text-purple mb-2">Medium Version</h5>
+                        <p class="text-dark small mb-0" style="line-height: 1.6;">{{Write Medium Summary}}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="p-4 border rounded-4 h-100 bg-white shadow-sm border-top-teal">
+                        <h5 class="fw-bold text-teal mb-2">Long Version</h5>
+                        <p class="text-dark small mb-0" style="line-height: 1.6;">{{Write Long Summary}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-5 animate-fade-up" style="animation-delay: 0.2s;">
+            <h4 class="fw-bold text-dark mb-4"><i class="fas fa-chart-pie text-warning me-2"></i>Skill Gap Analysis</h4>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4 h-100 bg-light-green border border-success">
+                        <h6 class="fw-bold text-success mb-3"><i class="fas fa-check-circle me-2"></i>Skills You Have</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {{Create 4-5 spans like this: <span class="badge bg-white text-success border border-success px-3 py-2 rounded-pill shadow-sm">Skill Name</span>}}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-4 rounded-4 h-100 bg-light-red border border-danger">
+                        <h6 class="fw-bold text-danger mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Missing for {target_role}</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                             {{Create 4-5 spans like this: <span class="badge bg-white text-danger border border-danger px-3 py-2 rounded-pill shadow-sm">Missing Skill</span>}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4 animate-fade-up" style="animation-delay: 0.4s;">
+            <h4 class="fw-bold text-dark mb-4"><i class="fas fa-magic text-purple me-2"></i>Bullet Point Improvements</h4>
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th width="45%" class="text-muted text-uppercase small p-3">🔴 Weak Original</th>
+                                <th width="10%" class="text-center bg-white border-0"></th>
+                                <th width="45%" class="text-success text-uppercase small fw-bold p-3">🟢 Strong Rewrite</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{Create 3 rows like this: 
+                            <tr>
+                                <td class="text-muted p-3 bg-light-red small">Weak Bullet</td>
+                                <td class="text-center border-0"><i class="fas fa-arrow-right text-muted"></i></td>
+                                <td class="fw-bold text-dark p-3 bg-light-green small">Strong Rewrite</td>
+                            </tr>
+                            }}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    """
     
     try:
         completion = client.chat.completions.create(
@@ -272,6 +366,8 @@ def view_report(report_id):
     else:
         return "Report not found", 404
 
+# --- MODULE 2: INTERVIEW (High Quality Prompt Restored) ---
+
 @app.route('/chatbot')
 def interview_module():
     if 'user' not in session: return redirect('/')
@@ -280,9 +376,83 @@ def interview_module():
 @app.route('/interview/generate', methods=['POST'])
 def generate_interview_questions():
     if 'user' not in session: return "Unauthorized", 401
-    # ... (Your existing logic is fine here, assuming no DB writes) ...
-    # Simplified for brevity - ensure you keep your AI logic
-    return "AI Response" 
+    
+    role = request.form.get('role')
+    company = request.form.get('company')
+    q_type = request.form.get('q_type')
+    count = request.form.get('count')
+    
+    if 'resume' not in request.files: return "No file", 400
+    file = request.files['resume']
+    text = extract_text_from_pdf(file)
+
+    prompt = f"""
+    Act as a Senior Interviewer at {company}.
+    Role: {role}.
+    Candidate Resume: "{text[:2000]}"
+    
+    Task: Generate {count} {q_type} interview questions.
+    FOR EACH QUESTION, PROVIDE A CONCISE "MODEL ANSWER".
+    
+    OUTPUT HTML ONLY. NO MARKDOWN.
+    Use this exact card structure for EACH question:
+    
+    <div class="qa-card mb-4 animate-fade-up p-4 border rounded-4 shadow-sm bg-white">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h5 class="fw-bold text-dark w-100">Q: {{Question Text}}</h5>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-3">
+            <button class="btn btn-sm btn-outline-danger rounded-pill fw-bold" onclick="toggleTimer(this)">
+                <i class="fas fa-stopwatch me-1"></i> Timer
+            </button>
+            <span class="timer-display fw-bold text-danger me-3"></span>
+            <button class="btn btn-sm btn-outline-success rounded-pill fw-bold" onclick="this.closest('.qa-card').querySelector('.answer-box').classList.toggle('d-none')">
+                <i class="fas fa-eye me-1"></i> Show Answer
+            </button>
+        </div>
+        <div class="p-3 bg-light rounded border small text-muted mb-2">
+            <strong><i class="fas fa-lightbulb text-warning me-1"></i> Hint:</strong> {{One sentence hint}}
+        </div>
+        <div class="answer-box d-none p-3 bg-success bg-opacity-10 border border-success rounded text-dark small">
+            <h6 class="fw-bold text-success mb-2"><i class="fas fa-check-circle me-2"></i>Model Answer</h6>
+            {{Write a professional, concise model answer here}}
+        </div>
+    </div>
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant"
+        )
+        return completion.choices[0].message.content.replace("```html", "").replace("```", "")
+    except Exception as e:
+        return f"<div class='alert alert-danger'>AI Error: {e}</div>"
+
+@app.route('/interview/save', methods=['POST'])
+def save_interview_result():
+    if 'user' not in session: return "Unauthorized", 401
+    
+    data = request.json
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    content_str = data.get('content', '')
+    role_str = f"Interview Prep: {data.get('role', 'General')}"
+    
+    if os.environ.get('DATABASE_URL'):
+        c.execute("INSERT INTO reports (user_email, role, content, created_at) VALUES (%s, %s, %s, CURRENT_TIMESTAMP)", 
+                 (session['user']['email'], role_str, content_str))
+    else:
+        now = datetime.datetime.now().strftime("%Y-%m-%d")
+        c.execute("INSERT INTO reports (user_email, role, content, created_at) VALUES (?, ?, ?, ?)", 
+                 (session['user']['email'], role_str, content_str, now))
+                 
+    conn.commit()
+    conn.close()
+    return "Saved", 200
+
+# --- MODULE 3: JOBS (Search & Save Restored) ---
 
 @app.route('/jobs')
 def job_search_module():
@@ -295,13 +465,60 @@ def search_jobs():
     role = request.form.get('role')
     location = request.form.get('location')
     
-    conn = get_db_connection()
-    c = conn.cursor()
-    
-    # ... (Your Adzuna logic here) ...
-    # Ensure you use 'conn' from get_db_connection()
-    
-    return "Job HTML"
+    # 1. API Call
+    try:
+        url = "https://api.adzuna.com/v1/api/jobs/in/search/1"
+        params = {
+            "app_id": os.getenv("ADZUNA_APP_ID"),
+            "app_key": os.getenv("ADZUNA_APP_KEY"),
+            "results_per_page": 10,
+            "what": role,
+            "where": location,
+            "content-type": "application/json"
+        }
+        response = requests.get(url, params=params)
+        data = response.json()
+        
+        jobs_data = []
+        for job in data.get('results', []):
+            jobs_data.append({
+                "title": job.get('title'),
+                "company": job.get('company', {}).get('display_name'),
+                "location": job.get('location', {}).get('display_name'),
+                "desc": job.get('description')[:140] + "...",
+                "full_desc": job.get('description'), 
+                "url": job.get('redirect_url'),
+                "date": job.get('created')[:10]
+            })
+            
+    except Exception as e:
+        return f"<div class='alert alert-danger'>API Error: {e}</div>"
+
+    if not jobs_data:
+        return "<div class='text-center mt-5'><h5 class='text-muted'>No jobs found. Check API Keys.</h5></div>"
+
+    html = ""
+    for job in jobs_data:
+        safe_title = job['title'].replace("'", "").replace('"', "")
+        html += f"""
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold text-dark">{job['title']}</h6>
+                    <small class="text-primary fw-bold">{job['company']}</small>
+                    <div class="my-2">
+                        <span class="badge bg-light text-dark border"><i class="fas fa-map-marker-alt"></i> {job['location']}</span>
+                    </div>
+                    <p class="text-muted small mb-3">{job['desc']}</p>
+                    <div class="d-flex gap-2">
+                        <a href="{job['url']}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm flex-grow-1">Apply</a>
+                        <button onclick="saveJob(this, '{safe_title}', '{job['company']}', '{job['location']}', '{job['url']}')" class="btn btn-outline-secondary rounded-pill btn-sm"><i class="far fa-bookmark"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    return html
 
 @app.route('/jobs/save', methods=['POST'])
 def save_job():
@@ -330,10 +547,73 @@ def save_job():
     conn.close()
     return "Saved", 200
 
+# --- MODULE 4: COURSES (Golden Ticket Prompt Restored) ---
+
 @app.route('/courses')
 def course_module():
     if 'user' not in session: return redirect('/')
     return render_template('courses.html')
+
+@app.route('/courses/gap_analysis', methods=['POST'])
+def gap_analysis_courses():
+    if 'user' not in session: return "Unauthorized", 401
+    
+    role = request.form.get('role')
+    file = request.files['resume']
+    resume_text = extract_text_from_pdf(file)
+    
+    if len(resume_text) < 50: return "<div class='text-white text-center'>Resume unreadable.</div>"
+
+    prompt = f"""
+    Role: Senior Career Architect.
+    Task: Create a "Skill Bridge" roadmap for a candidate aiming for "{role}".
+    
+    1. Identify 3 CRITICAL MISSING SKILLS.
+    2. For each, recommend ONE top-tier FREE COURSE.
+    
+    OUTPUT HTML CARDS ONLY. Use this "Golden Ticket" structure:
+    
+    <div class="col-lg-4 col-md-6 fade-in">
+        <div class="card h-100 course-card border-0 shadow-lg position-relative overflow-hidden" style="border-radius: 20px;">
+            <div class="card-body p-4 d-flex flex-column">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="icon-square bg-warning bg-opacity-10 text-warning rounded-3 p-3 me-3">
+                        <i class="fas fa-exclamation-triangle fa-lg"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted fw-bold text-uppercase ls-1" style="font-size: 0.7rem;">MISSING SKILL</small>
+                        <h5 class="fw-bold text-dark mb-0">{{Skill Name}}</h5>
+                    </div>
+                </div>
+                
+                <div class="my-3 border-top border-bottom py-3">
+                    <small class="text-primary fw-bold text-uppercase mb-1 d-block">Recommended Fix</small>
+                    <h6 class="fw-bold text-dark mb-1">{{Course Name}}</h6>
+                    <div class="d-flex align-items-center text-muted small">
+                        <i class="fas fa-university me-2 text-secondary"></i>
+                        <span>{{Provider Name}}</span>
+                    </div>
+                </div>
+                
+                <a href="{{Course Link}}" target="_blank" class="btn btn-primary bg-gradient w-100 py-3 rounded-pill fw-bold shadow-sm mt-auto hover-scale text-uppercase">
+                    Claim Free Certificate <i class="fas fa-external-link-alt ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    """
+    
+    try:
+        completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            temperature=0.3
+        )
+        return completion.choices[0].message.content.replace("```html", "").replace("```", "")
+    except Exception as e:
+        return f"<div class='alert alert-danger'>AI Error: {e}</div>"
+
+# --- ADMIN & UTILS ---
 
 @app.route('/admin')
 def admin_panel():
@@ -349,7 +629,6 @@ def admin_panel():
         users = c.fetchall()
         c.execute("SELECT COUNT(*) FROM reports")
         res = c.fetchone()
-        # RealDictCursor returns dictionary, e.g. {'count': 5}
         total_scans = res['count'] if res else 0
     else:
         c.execute("SELECT * FROM users ORDER BY last_login DESC")
@@ -360,21 +639,13 @@ def admin_panel():
     conn.close()
     return render_template('admin.html', users=users, total_users=len(users), total_scans=total_scans)
 
-# --- DB FIX ROUTE (Optional) ---
-@app.route('/fix-db')
-def fix_db_manual():
-    init_db()
-    return "Database Tables Created Manually!"
-
-# --- RESET REPORTS TABLE ---
-# --- EMERGENCY DB RESET ROUTE ---
+# --- EMERGENCY DB RESET ROUTE (Fixes All "Missing Column" Errors) ---
 @app.route('/nuclear-reset')
 def nuclear_reset():
     conn = get_db_connection()
     c = conn.cursor()
     
     # 1. DELETE ALL OLD TABLES (Force Clean Slate)
-    # This fixes "Column not found" and "Relation does not exist" errors
     c.execute("DROP TABLE IF EXISTS reports")
     c.execute("DROP TABLE IF EXISTS saved_jobs")
     c.execute("DROP TABLE IF EXISTS job_cache")
@@ -387,5 +658,6 @@ def nuclear_reset():
     init_db()
     
     return "<h1>DATABASE RESET SUCCESSFUL. All tables are fixed. You can now Log In.</h1>"
+
 if __name__ == '__main__':
     app.run(debug=True)
