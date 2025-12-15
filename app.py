@@ -367,21 +367,25 @@ def fix_db_manual():
     return "Database Tables Created Manually!"
 
 # --- RESET REPORTS TABLE ---
-@app.route('/reset-reports')
-def reset_reports():
+# --- EMERGENCY DB RESET ROUTE ---
+@app.route('/nuclear-reset')
+def nuclear_reset():
     conn = get_db_connection()
     c = conn.cursor()
     
-    # 1. Delete the old table (Nuclear option)
+    # 1. DELETE ALL OLD TABLES (Force Clean Slate)
+    # This fixes "Column not found" and "Relation does not exist" errors
     c.execute("DROP TABLE IF EXISTS reports")
+    c.execute("DROP TABLE IF EXISTS saved_jobs")
+    c.execute("DROP TABLE IF EXISTS job_cache")
+    c.execute("DROP TABLE IF EXISTS users") 
     
-    # 2. Save the deletion
     conn.commit()
     conn.close()
     
-    # 3. Re-run init_db to create the NEW table with 'role' column
+    # 2. CREATE FRESH TABLES
     init_db()
     
-    return "<h1>Success! Old Reports table deleted. New table created with 'role' column.</h1>"
+    return "<h1>DATABASE RESET SUCCESSFUL. All tables are fixed. You can now Log In.</h1>"
 if __name__ == '__main__':
     app.run(debug=True)
