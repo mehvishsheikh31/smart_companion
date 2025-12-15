@@ -113,6 +113,12 @@ def init_db():
     conn.commit()
     conn.close()
 
+
+# --- ADD THIS LINE RIGHT HERE ---
+with app.app_context():
+    init_db()
+# --------------------------------
+
 def extract_text_from_pdf(pdf_file):
     try:
         reader = PdfReader(pdf_file)
@@ -124,26 +130,43 @@ def extract_text_from_pdf(pdf_file):
     except:
         return ""
 
-# --- CORE ROUTES ---
+
 @app.route('/')
 def home():
     if 'user' in session:
-        conn = sqlite3.connect('database.db')
-        conn.row_factory = sqlite3.Row # Allows accessing columns by name
+        # USE THE SMART CONNECTION FUNCTION
+        conn = get_db_connection()
         c = conn.cursor()
         
-        # 1. Fetch Recent Resume Reports
-        c.execute("SELECT * FROM reports WHERE user_email = ? ORDER BY id DESC LIMIT 3", (session['user']['email'],))
-        saved_reports = c.fetchall()
-        
-        # 2. Fetch Saved Jobs (NEW)
-        c.execute("SELECT * FROM saved_jobs WHERE user_email = ? ORDER BY id DESC LIMIT 5", (session['user']['email'],))
-        saved_jobs_list = c.fetchall()
+        # Check if Postgres (Render) or SQLite (Laptop)
+        if os.environ.get('DATABASE_URL'):
+            # Postgres Syntax (%s)
+            c.execute("SELECT * FROM reports WHERE user_email = %s ORDER BY id DESC LIMIT 3", (session['user']['email'],))
+            # Need to convert RealDictCursor to list for template
+            saved_reports = c.fetchall()
+            
+            # Check if saved_jobs table exists before querying
+            try:
+                c.execute("SELECT * FROM saved_jobs WHERE user_email = %s ORDER BY id DESC LIMIT 5", (session['user']['email'],))
+                saved_jobs_list = c.fetchall()
+            except:
+                saved_jobs_list = []
+        else:
+            # SQLite Syntax (?)
+            c.execute("SELECT * FROM reports WHERE user_email = ? ORDER BY id DESC LIMIT 3", (session['user']['email'],))
+            saved_reports = c.fetchall()
+            
+            try:
+                c.execute("SELECT * FROM saved_jobs WHERE user_email = ? ORDER BY id DESC LIMIT 5", (session['user']['email'],))
+                saved_jobs_list = c.fetchall()
+            except:
+                saved_jobs_list = []
         
         conn.close()
         return render_template('dashboard.html', user=session['user'], reports=saved_reports, saved_jobs=saved_jobs_list)
         
     return render_template('login.html')
+
 @app.route('/login')
 def login():
     redirect_uri = url_for('authorize', _external=True)
@@ -804,33 +827,40 @@ def gap_analysis_courses():
  # ==========================================
 # MODULE 5: ADMIN DASHBOARD (ANALYTICS)
 # ==========================================
+
 @app.route('/admin')
 def admin_panel():
     if 'user' not in session: return redirect('/')
     
-    # SECURITY CHECK: Only YOU can see this page
-    # Replace this with your EXACT Google Email
+    # Replace with your EXACT Google Email
     admin_email = 'mehvishsheikh.3101@gmail.com' 
     
     if session['user']['email'] != admin_email: 
         return f"<h1 style='color:red; text-align:center; margin-top:50px;'>403 Forbidden<br>You are not the Admin.</h1>", 403
 
-    conn = sqlite3.connect('database.db')
-    conn.row_factory = sqlite3.Row # This allows us to access columns by name
+    # USE SMART CONNECTION
+    conn = get_db_connection()
     c = conn.cursor()
     
-    # 1. Get List of All Users
-    c.execute("SELECT * FROM users ORDER BY last_login DESC")
-    users = c.fetchall()
-    
-    # 2. Get Total Usage Stats
-    total_users = len(users)
-    
-    # 3. Calculate Total Scans (Optional: just counting rows in reports)
-    c.execute("SELECT COUNT(*) FROM reports")
-    total_scans = c.fetchone()[0]
+    if os.environ.get('DATABASE_URL'):
+        # Postgres queries
+        c.execute("SELECT * FROM users ORDER BY last_login DESC")
+        users = c.fetchall()
+        c.execute("SELECT COUNT(*) FROM reports")
+        # Access by index because fetchone returns a RealDictRow or tuple
+        scan_result = c.fetchone()
+        total_scans = scan_result['count'] if 'count' in scan_result else 0
+    else:
+        # SQLite queries
+        c.execute("SELECT * FROM users ORDER BY last_login DESC")
+        users = c.fetchall()
+        c.execute("SELECT COUNT(*) FROM reports")
+        total_scans = c.fetchone()[0]
     
     conn.close()
+    
+    # Calculate total users
+    total_users = len(users)
     
     return render_template('admin.html', users=users, total_users=total_users, total_scans=total_scans)
 
