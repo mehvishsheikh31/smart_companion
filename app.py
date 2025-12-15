@@ -579,7 +579,6 @@ def save_job():
 def course_module():
     if 'user' not in session: return redirect('/')
     return render_template('courses.html')
-
 @app.route('/courses/gap_analysis', methods=['POST'])
 def gap_analysis_courses():
     if 'user' not in session: return "Unauthorized", 401
@@ -588,45 +587,69 @@ def gap_analysis_courses():
     file = request.files['resume']
     resume_text = extract_text_from_pdf(file)
     
-    if len(resume_text) < 50: return "<div class='text-white text-center'>Resume unreadable.</div>"
+    if len(resume_text) < 50: return "<div class='text-danger text-center'>Resume unreadable.</div>"
 
+    # UPDATED PROMPT: Broader list of High-Quality Free Sources
     prompt = f"""
-    Role: Senior Career Architect.
-    Task: Create a "Skill Bridge" roadmap for a candidate aiming for "{role}".
+    Role: Senior Technical Career Coach.
+    Task: Analyze the resume for the target role: "{role}".
     
-    1. Identify 3 CRITICAL MISSING SKILLS.
-    2. For each, recommend ONE top-tier FREE COURSE.
+    1. Identify the 4 MOST CRITICAL MISSING SKILLS.
+    2. For each skill, recommend ONE high-quality FREE course.
     
-    OUTPUT HTML CARDS ONLY. Use this "Golden Ticket" structure:
+    PRIORITIZE THESE REPUTABLE FREE PROVIDERS (But choose the best fit):
+    - GeeksforGeeks (Free Courses)
+    - Microsoft Learn
+    - Google Cloud Skills Boost / Kaggle
+    - Cisco Networking Academy (Skills for All)
+    - freeCodeCamp
+    - IBM SkillsBuild
+    - Simplilearn (SkillUp) / Great Learning
+    - Udemy (Free Courses only)
     
-    <div class="col-lg-4 col-md-6 fade-in">
-        <div class="card h-100 course-card border-0 shadow-lg position-relative overflow-hidden" style="border-radius: 20px;">
-            <div class="card-body p-4 d-flex flex-column">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="icon-square bg-warning bg-opacity-10 text-warning rounded-3 p-3 me-3">
-                        <i class="fas fa-exclamation-triangle fa-lg"></i>
-                    </div>
-                    <div>
-                        <small class="text-muted fw-bold text-uppercase ls-1" style="font-size: 0.7rem;">MISSING SKILL</small>
-                        <h5 class="fw-bold text-dark mb-0">{{Skill Name}}</h5>
+    OUTPUT HTML ONLY. NO MARKDOWN.
+    Use this exact HTML structure for a 2x2 Grid (4 cards total):
+    
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 course-card">
+                <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-start">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-square bg-light text-primary rounded-3 p-3 me-3">
+                            <i class="fas fa-book-reader fa-lg"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.7rem;">MISSING SKILL</small>
+                            <h6 class="fw-bold text-dark mb-0">{{Skill Name}}</h6>
+                        </div>
                     </div>
                 </div>
                 
-                <div class="my-3 border-top border-bottom py-3">
-                    <small class="text-primary fw-bold text-uppercase mb-1 d-block">Recommended Fix</small>
-                    <h6 class="fw-bold text-dark mb-1">{{Course Name}}</h6>
-                    <div class="d-flex align-items-center text-muted small">
-                        <i class="fas fa-university me-2 text-secondary"></i>
-                        <span>{{Provider Name}}</span>
-                    </div>
+                <div class="card-body p-4 pt-3">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill mb-2">{{Provider Name}}</span>
+                    <h5 class="fw-bold text-dark mb-2">{{Course Name}}</h5>
+                    <p class="small text-muted mb-0">
+                        {{One sentence on why this specific course is best for the role.}}
+                    </p>
                 </div>
                 
-                <a href="{{Course Link}}" target="_blank" class="btn btn-primary bg-gradient w-100 py-3 rounded-pill fw-bold shadow-sm mt-auto hover-scale text-uppercase">
-                    Claim Free Certificate <i class="fas fa-external-link-alt ms-2"></i>
-                </a>
+                <div class="card-footer bg-white border-0 p-4 pt-0">
+                    <hr class="text-muted opacity-25 mb-3">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <div class="d-flex gap-2">
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success">
+                                <i class="fas fa-check-circle me-1"></i> FREE
+                            </span>
+                        </div>
+                        
+                        <a href="{{Course Link}}" target="_blank" class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm">
+                            Start Learning <i class="fas fa-external-link-alt ms-2"></i>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+        </div>
     """
     
     try:
