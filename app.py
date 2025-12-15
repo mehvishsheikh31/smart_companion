@@ -833,5 +833,40 @@ def admin_panel():
     conn.close()
     
     return render_template('admin.html', users=users, total_users=total_users, total_scans=total_scans)
+
+# --- TEMPORARY DATABASE FIX ---
+@app.route('/fix-db')
+def fix_db():
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # 1. Create Users Table (Postgres)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT,
+            picture TEXT,
+            role TEXT,
+            last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            login_count INTEGER DEFAULT 1
+        )
+    ''')
+    
+    # 2. Create Reports Table (Postgres)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS reports (
+            id SERIAL PRIMARY KEY,
+            user_email TEXT,
+            filename TEXT,
+            content TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
+    return "<h1>Success! Database Tables Created. You can now Log In.</h1>"
+# -----------------------------
 if __name__ == '__main__':
     app.run(debug=True)
