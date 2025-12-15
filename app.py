@@ -458,10 +458,10 @@ def save_interview_result():
 def job_search_module():
     if 'user' not in session: return redirect('/')
     return render_template('jobs.html')
-
 @app.route('/jobs/search', methods=['POST'])
 def search_jobs():
     if 'user' not in session: return "Unauthorized", 401
+    
     role = request.form.get('role')
     location = request.form.get('location')
     
@@ -488,7 +488,7 @@ def search_jobs():
                 "desc": job.get('description')[:140] + "...",
                 "full_desc": job.get('description'), 
                 "url": job.get('redirect_url'),
-                "date": job.get('created')[:10]
+                "date": job.get('created')[:10] # Extracts YYYY-MM-DD
             })
             
     except Exception as e:
@@ -497,28 +497,54 @@ def search_jobs():
     if not jobs_data:
         return "<div class='text-center mt-5'><h5 class='text-muted'>No jobs found. Check API Keys.</h5></div>"
 
+    # 2. Generate Beautiful HTML
     html = ""
     for job in jobs_data:
+        # Generate a cool avatar logo based on company name
+        logo_url = f"https://ui-avatars.com/api/?name={job['company']}&background=random&size=128"
+        
         safe_title = job['title'].replace("'", "").replace('"', "")
+        
         html += f"""
         <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 border-0 shadow-sm rounded-4">
-                <div class="card-body p-4">
-                    <h6 class="fw-bold text-dark">{job['title']}</h6>
-                    <small class="text-primary fw-bold">{job['company']}</small>
-                    <div class="my-2">
-                        <span class="badge bg-light text-dark border"><i class="fas fa-map-marker-alt"></i> {job['location']}</span>
+            <div class="card h-100 border-0 shadow-sm rounded-4 hover-lift" style="transition: transform 0.2s;">
+                <div class="card-body p-4 d-flex flex-column">
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <img src="{logo_url}" class="rounded-circle me-3 border p-1" width="45" height="45" alt="Logo">
+                        <div style="overflow: hidden;">
+                            <h6 class="fw-bold text-dark mb-0 text-truncate">{job['title']}</h6>
+                            <small class="text-primary fw-bold">{job['company']}</small>
+                        </div>
                     </div>
-                    <p class="text-muted small mb-3">{job['desc']}</p>
-                    <div class="d-flex gap-2">
-                        <a href="{job['url']}" target="_blank" class="btn btn-outline-dark rounded-pill btn-sm flex-grow-1">Apply</a>
-                        <button onclick="saveJob(this, '{safe_title}', '{job['company']}', '{job['location']}', '{job['url']}')" class="btn btn-outline-secondary rounded-pill btn-sm"><i class="far fa-bookmark"></i></button>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-light text-dark border me-1">
+                            <i class="fas fa-map-marker-alt me-1 text-danger"></i> {job['location']}
+                        </span>
+                        <span class="badge bg-light text-muted border">
+                            <i class="far fa-clock me-1"></i> {job['date']}
+                        </span>
                     </div>
+                    
+                    <p class="text-muted small mb-4 flex-grow-1" style="line-height: 1.6;">{job['desc']}</p>
+                    
+                    <div class="d-flex gap-2 mt-auto">
+                        <a href="{job['url']}" target="_blank" class="btn btn-dark rounded-pill fw-bold btn-sm flex-grow-1">
+                            Apply Now <i class="fas fa-external-link-alt ms-1"></i>
+                        </a>
+                        <button onclick="saveJob(this, '{safe_title}', '{job['company']}', '{job['location']}', '{job['url']}')" 
+                                class="btn btn-outline-secondary rounded-pill btn-sm" title="Save Job">
+                            <i class="far fa-bookmark"></i>
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
         """
     return html
+
 
 @app.route('/jobs/save', methods=['POST'])
 def save_job():
