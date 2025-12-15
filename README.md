@@ -106,14 +106,12 @@ Smart Companion addresses the **entire job-seeking lifecycle** in one platform.
 | **Course Platforms** | Course recommendations |
 
 ---
+Technology,Usage
+PostgreSQL (Render),"Production Database. Stores user profiles, permanent login history, and analytics data in the cloud."
+SQLite (Local),Development Database. Automatically used for local testing to ensure easy setup without API keys.
+Psycopg2,Python adapter used to handle secure connections to the remote PostgreSQL server.
+Server-Side Storage,Temporary storage for processing uploaded Resume PDFs before parsing.
 
-### ☁️ Deployment & DevOps
-| Technology | Usage |
-|----------|------|
-| **Render** | Cloud deployment |
-| **Gunicorn** | Production server |
-| **Environment Variables** | Secure API key management |
-| **Git & GitHub** | Version control |
 
 ---
 
