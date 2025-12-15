@@ -70,7 +70,10 @@ h1 { font-weight: 800; letter-spacing: -1px; }
     border: 1px solid rgba(255, 255, 255, 0.5);
 }
 /* Add this for the card animation */
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 .hover-lift:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
 }

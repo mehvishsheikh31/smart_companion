@@ -589,7 +589,7 @@ def gap_analysis_courses():
     
     if len(resume_text) < 50: return "<div class='text-danger text-center'>Resume unreadable.</div>"
 
-    # UPDATED PROMPT: Broader list of High-Quality Free Sources
+    # UPDATED PROMPT: Colorful, Vibrant UI with Top Free Sources
     prompt = f"""
     Role: Senior Technical Career Coach.
     Task: Analyze the resume for the target role: "{role}".
@@ -597,53 +597,51 @@ def gap_analysis_courses():
     1. Identify the 4 MOST CRITICAL MISSING SKILLS.
     2. For each skill, recommend ONE high-quality FREE course.
     
-    PRIORITIZE THESE REPUTABLE FREE PROVIDERS (But choose the best fit):
-    - GeeksforGeeks (Free Courses)
+    PRIORITIZE THESE REPUTABLE FREE PROVIDERS:
+    - GeeksforGeeks
     - Microsoft Learn
     - Google Cloud Skills Boost / Kaggle
-    - Cisco Networking Academy (Skills for All)
+    - Cisco Networking Academy
     - freeCodeCamp
     - IBM SkillsBuild
-    - Simplilearn (SkillUp) / Great Learning
-    - Udemy (Free Courses only)
+    - Simplilearn / Great Learning
     
     OUTPUT HTML ONLY. NO MARKDOWN.
-    Use this exact HTML structure for a 2x2 Grid (4 cards total):
+    
+    Use this exact HTML structure for a 2x2 Grid. 
+    IMPORTANT: Vary the colors for each card (Use 'primary', 'success', 'warning', 'info' for variety).
     
     <div class="row g-4">
         <div class="col-md-6">
-            <div class="card h-100 border-0 shadow-sm rounded-4 course-card">
-                <div class="card-header bg-white border-0 p-4 pb-0 d-flex justify-content-between align-items-start">
-                    <div class="d-flex align-items-center">
-                        <div class="icon-square bg-light text-primary rounded-3 p-3 me-3">
+            <div class="card h-100 border-0 shadow-sm rounded-4 position-relative overflow-hidden hover-lift">
+                <div class="position-absolute top-0 start-0 w-100" style="height: 6px; background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);"></div>
+                
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="icon-circle bg-primary bg-opacity-10 text-primary rounded-circle p-3 me-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                             <i class="fas fa-book-reader fa-lg"></i>
                         </div>
                         <div>
-                            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.7rem;">MISSING SKILL</small>
-                            <h6 class="fw-bold text-dark mb-0">{{Skill Name}}</h6>
+                            <small class="text-uppercase fw-bold text-muted" style="font-size: 0.7rem; letter-spacing: 1px;">MISSING SKILL</small>
+                            <h5 class="fw-bold text-dark mb-0">{{Skill Name}}</h5>
                         </div>
                     </div>
-                </div>
-                
-                <div class="card-body p-4 pt-3">
-                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary rounded-pill mb-2">{{Provider Name}}</span>
-                    <h5 class="fw-bold text-dark mb-2">{{Course Name}}</h5>
-                    <p class="small text-muted mb-0">
-                        {{One sentence on why this specific course is best for the role.}}
+                    
+                    <span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-3 py-2 mb-3">
+                        <i class="fas fa-university me-1"></i> {{Provider Name}}
+                    </span>
+                    
+                    <p class="text-muted small mb-4" style="line-height: 1.6;">
+                        {{One sentence on why this course is the best choice.}}
                     </p>
-                </div>
-                
-                <div class="card-footer bg-white border-0 p-4 pt-0">
-                    <hr class="text-muted opacity-25 mb-3">
-                    <div class="d-flex justify-content-between align-items-center gap-2">
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success">
-                                <i class="fas fa-check-circle me-1"></i> FREE
-                            </span>
-                        </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top border-light">
+                        <span class="fw-bold text-success small">
+                            <i class="fas fa-check-circle me-1"></i> 100% FREE
+                        </span>
                         
-                        <a href="{{Course Link}}" target="_blank" class="btn btn-dark rounded-pill fw-bold px-4 shadow-sm">
-                            Start Learning <i class="fas fa-external-link-alt ms-2"></i>
+                        <a href="{{Course Link}}" target="_blank" class="btn btn-primary bg-gradient rounded-pill px-4 fw-bold shadow-sm">
+                            Start Learning <i class="fas fa-arrow-right ms-1"></i>
                         </a>
                     </div>
                 </div>
