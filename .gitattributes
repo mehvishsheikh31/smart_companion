@@ -1,8 +1,10 @@
-# The Nuclear Option: Ignore ALL HTML and CSS files everywhere
-*.html linguist-vendored
-*.css linguist-vendored
-*.js linguist-vendored
-
-# Ignore specific folders just in case
+# 1. Hide the HEAVY assets (CSS, Images, JS libraries)
 static/* linguist-vendored
-templates/* linguist-vendored
+
+# 2. Hide ONLY your biggest HTML files (So Python can win)
+templates/dashboard.html linguist-vendored
+templates/base.html linguist-vendored
+templates/index.html linguist-vendored
+
+# Note: We are NOT hiding *.html anymore. 
+# Smaller files (like login.html, resume.html) will still count!
