@@ -1,5 +1,8 @@
-# Ignore Static files (CSS, Images, JS)
-static/* linguist-vendored
+# The Nuclear Option: Ignore ALL HTML and CSS files everywhere
+*.html linguist-vendored
+*.css linguist-vendored
+*.js linguist-vendored
 
-# Ignore HTML Templates (so Python becomes #1)
+# Ignore specific folders just in case
+static/* linguist-vendored
 templates/* linguist-vendored
