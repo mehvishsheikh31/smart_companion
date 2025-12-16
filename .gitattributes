@@ -1,5 +1,5 @@
-# Ignore the 'static' folder (images, icons, heavy CSS libraries)
-# This prevents them from counting towards your language stats
+# Ignore Static files (CSS, Images, JS)
 static/* linguist-vendored
 
-# Keep 'templates' normal so HTML still shows up as a smaller percentage
+# Ignore HTML Templates (so Python becomes #1)
+templates/* linguist-vendored
