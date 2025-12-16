@@ -1,10 +1,15 @@
-# 1. Hide the HEAVY assets (CSS, Images, JS libraries)
+# 1. Hide the Static Assets (CSS/Images)
 static/* linguist-vendored
 
-# 2. Hide ONLY your biggest HTML files (So Python can win)
-templates/dashboard.html linguist-vendored
+# 2. Hide the HUGE HTML files (The ones with complex UI)
 templates/base.html linguist-vendored
-templates/index.html linguist-vendored
+templates/dashboard.html linguist-vendored
+templates/resume_result.html linguist-vendored
+templates/courses.html linguist-vendored
+templates/jobs.html linguist-vendored
 
-# Note: We are NOT hiding *.html anymore. 
-# Smaller files (like login.html, resume.html) will still count!
+# 3. We are KEEPING these visible (so you get ~20-30% HTML stats):
+# - templates/login.html
+# - templates/resume.html
+# - templates/interview.html
+# - templates/admin.html
