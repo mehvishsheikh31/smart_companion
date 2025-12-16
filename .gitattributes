@@ -1,15 +1,15 @@
-# 1. Hide the Static Assets (CSS/Images)
+# 1. Hide Static Assets
 static/* linguist-vendored
 
-# 2. Hide the HUGE HTML files (The ones with complex UI)
+# 2. Hide LARGE HTML files (So Python wins)
 templates/base.html linguist-vendored
 templates/dashboard.html linguist-vendored
 templates/resume_result.html linguist-vendored
 templates/courses.html linguist-vendored
 templates/jobs.html linguist-vendored
+templates/admin.html linguist-vendored
+templates/interview.html linguist-vendored
 
-# 3. We are KEEPING these visible (so you get ~20-30% HTML stats):
+# 3. We are keeping ONLY these visible:
 # - templates/login.html
 # - templates/resume.html
-# - templates/interview.html
-# - templates/admin.html
