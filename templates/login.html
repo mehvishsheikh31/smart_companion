@@ -5,151 +5,293 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Career Companion AI</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Space+Grotesk:wght@300;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
+        :root {
+            --primary-glow: #7c3aed;
+            --secondary-glow: #2563eb;
+            --accent: #06b6d4;
+            --glass-bg: rgba(18, 18, 25, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             height: 100vh;
             margin: 0;
             overflow: hidden;
-            /* Premium Dark Gradient Background */
-            background: radial-gradient(circle at 10% 20%, rgb(20, 20, 40) 0%, rgb(10, 10, 20) 90%);
+            background-color: #0f0f13;
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        /* FLOATING BACKGROUND SHAPES */
-        .shape { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; z-index: -1; }
-        .shape-1 { top: -10%; left: -10%; width: 500px; height: 500px; background: #6f42c1; animation: float 10s infinite alternate; }
-        .shape-2 { bottom: -10%; right: -10%; width: 400px; height: 400px; background: #0d6efd; animation: float 8s infinite alternate-reverse; }
-
-        @keyframes float { 
-            0% { transform: translate(0, 0); } 
-            100% { transform: translate(30px, 30px); } 
-        }
-
-        /* MAIN GLASS CARD */
-        .login-card {
-            width: 900px;
-            max-width: 95%;
-            height: 550px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 30px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* LEFT SIDE (VISUALS) */
-        .visual-side {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            padding: 50px;
+            color: white;
             position: relative;
         }
-        
-        .visual-icon {
-            width: 80px; height: 80px;
-            background: linear-gradient(135deg, #6f42c1, #8e44ad);
-            border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2rem; color: white;
-            box-shadow: 0 10px 20px rgba(111, 66, 193, 0.4);
-            margin-bottom: 30px;
+
+        /* --- DYNAMIC AURORA BACKGROUND --- */
+        .aurora-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.15) 0%, transparent 50%);
+            filter: blur(60px);
+            animation: pulseGlow 10s infinite alternate;
         }
 
-        /* RIGHT SIDE (LOGIN FORM) */
+        /* A subtle grid overlay for a "Tech" feel */
+        .grid-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.1); opacity: 1; }
+        }
+
+        /* --- THE GLASS MONOLITH CARD --- */
+        .login-container {
+            width: 1000px;
+            height: 600px;
+            display: flex;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px); /* Safari support */
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                0 40px 80px -20px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Lighting Reflection Effect on Top */
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        }
+
+        /* --- LEFT SIDE: THE VISUAL STORY --- */
+        .visual-side {
+            flex: 1.2;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: radial-gradient(circle at top left, rgba(255,255,255,0.03), transparent);
+            position: relative;
+        }
+
+        .brand-logo {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--primary-glow), var(--secondary-glow));
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .feature-list {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .feature-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            backdrop-filter: blur(5px);
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-pill:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* --- RIGHT SIDE: THE INTERACTION --- */
         .form-side {
             flex: 1;
-            padding: 50px;
+            padding: 60px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
-            background: white;
+            background: rgba(0, 0, 0, 0.2);
+            border-left: 1px solid var(--glass-border);
         }
 
-        /* GOOGLE BUTTON STYLING */
-        .btn-google {
+        .login-header h2 { font-weight: 600; margin-bottom: 10px; }
+        .login-header p { color: #94a3b8; font-size: 0.95rem; margin-bottom: 40px; }
+
+        /* Custom Google Button */
+        .btn-google-custom {
             background: white;
-            color: #333;
-            border: 1px solid #ddd;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-weight: 600;
+            color: #0f0f13;
+            height: 56px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 15px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            width: 100%;
             justify-content: center;
+            gap: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            border: none;
         }
-        
-        .btn-google:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            border-color: #ccc;
-            background: #f8f9fa;
+
+        .btn-google-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            background: #f8fafc;
         }
 
-        /* ANIMATIONS */
-        .animate-up { animation: fadeInUp 0.8s ease-out forwards; opacity: 0; transform: translateY(20px); }
-        .delay-1 { animation-delay: 0.2s; }
-        .delay-2 { animation-delay: 0.4s; }
-        .delay-3 { animation-delay: 0.6s; }
+        .btn-google-custom::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            transition: 0.5s;
+        }
+        .btn-google-custom:hover::after { left: 100%; }
 
-        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        .divider {
+            display: flex; align-items: center; margin: 30px 0;
+            color: #475569; font-size: 0.8rem;
+        }
+        .divider::before, .divider::after {
+            content: ""; flex: 1; height: 1px; background: #334155;
+        }
+        .divider span { padding: 0 10px; }
 
-        /* MOBILE RESPONSIVE */
-        @media (max-width: 768px) {
-            .login-card { flex-direction: column; height: auto; }
-            .visual-side { padding: 40px 30px; text-align: center; align-items: center; }
-            .form-side { padding: 40px 30px; }
+        .security-note {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748b;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+
+        /* FLOATING 3D ELEMENTS (Visual Polish) */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            z-index: 1;
+            pointer-events: none;
+        }
+        .orb-1 { width: 150px; height: 150px; background: var(--primary-glow); top: -50px; right: -50px; opacity: 0.4; }
+        .orb-2 { width: 100px; height: 100px; background: var(--accent); bottom: 50px; left: 50px; opacity: 0.3; }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .login-container { flex-direction: column; width: 90%; height: auto; }
+            .visual-side { padding: 40px; height: 300px; }
+            .form-side { padding: 40px; }
+            .hero-text h1 { font-size: 2.5rem; }
         }
     </style>
 </head>
 <body>
 
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
+    <div class="aurora-bg"></div>
+    <div class="grid-overlay"></div>
 
-    <div class="login-card animate-up">
+    <div class="login-container">
         
         <div class="visual-side">
-            <div class="visual-icon animate-up delay-1">
-                <i class="fas fa-rocket"></i>
+            <div class="brand-logo">
+                <div class="logo-icon"><i class="fas fa-brain"></i></div>
+                <span>Smart Companion</span>
             </div>
-            <h1 class="fw-bold text-white mb-3 animate-up delay-2">CareerAI</h1>
-            <p class="text-white text-opacity-75 fs-5 animate-up delay-3" style="line-height: 1.6;">
-                Your intelligent companion for <br>
-                <span style="color: #d8b4fe;">Resume Scanning</span>, 
-                <span style="color: #93c5fd;">Mock Interviews</span>, 
-                and <span style="color: #fdba74;">Job Hunting</span>.
-            </p>
+
+            <div class="hero-text">
+                <h1>Unlock Your <br> Potential.</h1>
+                <p class="text-secondary mt-3 mb-4" style="max-width: 300px; line-height: 1.6;">
+                    AI-powered Resume Analysis, Mock Interviews, and Career Roadmaps designed for you.
+                </p>
+
+                <div class="feature-list">
+                    <div class="feature-pill">
+                        <i class="fas fa-file-alt text-info"></i> Resume Scan
+                    </div>
+                    <div class="feature-pill">
+                        <i class="fas fa-robot text-warning"></i> AI Interview
+                    </div>
+                    <div class="feature-pill">
+                        <i class="fas fa-briefcase text-success"></i> Job Match
+                    </div>
+                </div>
+            </div>
+            
+            <div class="orb orb-2"></div>
         </div>
 
         <div class="form-side">
-            <h2 class="fw-bold text-dark mb-2">Welcome Back</h2>
-            <p class="text-muted mb-5">Please sign in to access your dashboard.</p>
+            <div class="orb orb-1"></div> <div class="login-header">
+                <h2>Welcome Back</h2>
+                <p>Access your professional dashboard</p>
+            </div>
 
-            <a href="/login" class="btn-google">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="24" height="24" alt="Google">
-                <span>Continue with Google</span>
+            <a href="/login" class="btn-google-custom">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="22" height="22" alt="G">
+                Continue with Google
             </a>
 
-            <p class="mt-5 text-muted small text-center">
-                <i class="fas fa-lock me-1"></i> Secure Login via Google OAuth
+            <div class="divider">
+                <span>SECURE ACCESS</span>
+            </div>
+
+            <p style="text-align: center; color: #94a3b8; font-size: 0.9rem; line-height: 1.5;">
+                Join thousands of students landing their dream jobs using AI.
             </p>
+
+            <div class="security-note">
+                <i class="fas fa-shield-alt"></i> Encrypted & Secure Connection
+            </div>
         </div>
 
     </div>
