@@ -65,26 +65,6 @@ Smart Companion addresses the **entire job-seeking lifecycle** in one platform.
 | **SQLite (Local)**      | Lightweight development database used for local testing and rapid setup without external dependencies                 |
 | **Psycopg2**            | Python adapter for establishing secure connections between Flask backend and PostgreSQL database                      |
 | **Server-Side Storage** | Temporary storage for uploaded resume PDFs during processing and text extraction                                      |
-
-
-### 🔐 Authentication & Security
-| Feature | Implementation |
-|-------|---------------|
-| User Registration & Login | Flask-based authentication |
-| Password Storage | Hashed passwords (Werkzeug Security) |
-| Session Management | Session-based authentication |
-| Route Protection | Restricted access to dashboards and AI modules |
-| Logout | Secure session termination |
-
----
-
-### 🗄️ Database & Storage
-| Technology | Usage |
-|----------|------|
-| **SQLite** | User data, login history, generated reports |
-| **SQL Queries / Flask ORM** | Database operations |
-| **Server-Side File Storage** | Resume PDF uploads |
-
 ---
 
 ### 📄 Resume Processing
@@ -158,4 +138,3 @@ B.Tech – Data Science
 
 ---
 
-⭐ If you find this project useful, consider giving it a star!
